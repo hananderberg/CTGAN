@@ -5,26 +5,36 @@ from sdv import load_demo
 from sdv.tabular import CTGAN
 from table_evaluator import TableEvaluator
 
-# Read in dataset
-data = pd.read_csv("Data/Salary_dataset.csv")
+def syntheziseData(data, batch_size, training_epochs, number_of_rows):
+    ctgan = CTGAN(batch_size = batch_size, epochs = training_epochs, verbose=True)
+    ctgan.fit(data)
+    #CTGAN.sample(num_rows, randomize_samples=True, max_tries_per_batch=100, batch_size=None, output_file_path=None, conditions=None)
+    new_data = ctgan.sample(num_rows = number_of_rows)
+    return new_data
+    
+def evaluateSynthezisedData(data, new_data):
+    table_evaluator = TableEvaluator(data, new_data)
+    table_evaluator.visual_evaluation()
+
+def saveSynthezisedDataCSV(new_data, output_file_path):
+    output_path = output_file_path
+    new_data.to_csv(output_path, index=False)
+
+def concatinateDatasets(data, new_data, output_file_path_merged):
+    result = pd.concat([data, new_data])
+    result.to_csv(output_file_path_merged, index=False)
+
+## Read in dataset
+data = pd.read_csv("Data/Customers.csv")
 print(data)
 
-# Define categorical features
-# categorical_features = ['']
+## Set parameters
+batch_size = 5000
+training_epochs = 20
+number_of_rows = 200
+output_file_path = 'Data/extended_customers_dataset.csv'
+output_file_path_merged = 'Data/merged_customers_dataset.csv'
 
-ctgan = CTGAN(verbose=True)
-#ctgan.fit(data, categorical_features, epochs=200)
-ctgan.fit(data)
-
-new_data = ctgan.sample(num_rows=200)
-new_data.head()
-print(new_data)
-
-# Evaluation
-print(data.shape, new_data.shape)
-table_evaluator = TableEvaluator(data, new_data)
-#table_evaluator = TableEvaluator(data, new_data, cat_col=categorical_features)
-table_evaluator.visual_evaluation()
-
-# Save synthethic data
-new_data.to_csv('extended_salary_dataset.csv', index=False)
+new_data = syntheziseData(data, batch_size, training_epochs, number_of_rows)
+saveSynthezisedDataCSV(new_data, output_file_path)
+concatinateDatasets(data, new_data, output_file_path_merged)
