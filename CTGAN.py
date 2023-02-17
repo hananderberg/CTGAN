@@ -17,8 +17,7 @@ def evaluateSynthezisedData(data, new_data):
     table_evaluator.visual_evaluation()
 
 def saveSynthezisedDataCSV(new_data, output_file_path):
-    output_path = output_file_path
-    new_data.to_csv(output_path, index=False)
+    new_data.to_csv(output_file_path, index=False)
 
 def concatinateDatasets(data, new_data, output_file_path_merged):
     result = pd.concat([data, new_data])
