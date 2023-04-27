@@ -2,8 +2,6 @@ from typing import Any, Dict
 from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsClassifier
 
-## hej
-
 datasets: Dict[str, Dict[str, Any]] = {
     "credit": {
         "name": "credit",

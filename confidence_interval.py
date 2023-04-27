@@ -57,7 +57,7 @@ if __name__ == '__main__':
     parser.add_argument(
       '--imputation_method',
       choices = ['MissForest', 'GAIN v1', 'GAIN v2'],
-      default='GAIN v1',
+      default='MissForest',
       type=str)
     parser.add_argument(
       '--sample_size',

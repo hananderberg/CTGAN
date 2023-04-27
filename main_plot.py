@@ -7,27 +7,28 @@ import argparse
 def main(args):
     df, df_ctgan50, df_ctgan100 = readDataSeparateCsv(args)
     df_summary = readDataSummary(args)
-    imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, imputation_df_ctgan200, imputation_df_ctgan500, \
-    prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, prediction_df_ctgan200, prediction_df_ctgan500 = readDataSeparateCsvBothImputationAndPrediction()
-    all_df_imputation = [imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, imputation_df_ctgan200, imputation_df_ctgan500]
-    all_df_prediction = [prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, prediction_df_ctgan200, prediction_df_ctgan500]
+    
+    #imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, imputation_df_ctgan200, imputation_df_ctgan500, \
+    #prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, prediction_df_ctgan200, prediction_df_ctgan500 = readDataSeparateCsvBothImputationAndPrediction()
+    #all_df_imputation = [imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, imputation_df_ctgan200, imputation_df_ctgan500]
+    #all_df_prediction = [prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, prediction_df_ctgan200, prediction_df_ctgan500]
     
     #plotBarChartNoBestResultAllMethods(args, df_summary)
     #plotBarChartNoBestResultBaselineMethods(args, df_summary)
 
     #plotBarChartAllDatasetsOneMissingness(args, df, 0) - NOT WORKING
     #plotBarChartAllDatasetsOneMissingness(args, df_ctgan50, 50) - NOT WORKING
-    # plotBarChartAllDatasetsOneMissingness(args, df_ctgan100, 100) - NOT WORKING
+    #plotBarChartAllDatasetsOneMissingness(args, df_ctgan100, 100) - NOT WORKING
 
     #plotCTGANImpact_OLD(args, df_summary)
 
-    plotCTGANImpact(args, all_df_imputation, all_df_prediction)
+    #plotCTGANImpact(args, all_df_imputation, all_df_prediction)
 
     #plotBarChartAllDatasetsAllMissingness(args, df, 0)
     #plotBarChartAllDatasetsAllMissingness(args, df_ctgan50, 50)
     #plotBarChartAllDatasetsAllMissingness(args, df_ctgan100, 100)
 
-    #plotCTGANImpactNoBestResult(args, df_summary)
+    plotCTGANImpactNoBestResult(args, df_summary)
 
 
 
@@ -89,6 +90,6 @@ if __name__ == '__main__':
     # Set parameters
     args.imputation_evaluation = 'mRMSE'
     args.prediction_evaluation = 'Accuracy'
-    args.evaluation_type = 'Prediction'
-    args.imputation_method = 'MICE'
+    args.evaluation_type = 'Imputation'
+    args.imputation_method = 'kNN'
     main(args)

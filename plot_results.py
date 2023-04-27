@@ -21,7 +21,7 @@ def plotCTGANImpact(args, all_df_imputation, all_df_prediction):
     current_datasets = []
     handles_list = []
     labels_list = []
-    bar_width = 0.25
+    bar_width = 0.18
     colors = brewer2mpl.get_map('Set1', 'qualitative', 8).mpl_colors
 
     for dataset in all_datasets:
@@ -46,7 +46,7 @@ def plotCTGANImpact(args, all_df_imputation, all_df_prediction):
     for i, dataset in enumerate(current_datasets):
       dataset_values = values_list[i*len(ctgan_options):(i+1)*len(ctgan_options)]
       x_ticks = np.arange(len(dataset_values[0]))
-      xtick_pos = x_ticks + bar_width
+      xtick_pos = x_ticks + 2*bar_width
       bars = []
      
       if len(current_datasets)>1:
@@ -98,27 +98,31 @@ def plotCTGANImpactNoBestResult(args, df):
 
     for imputation_method in all_imputation_methods:
       no_datasets = 0
-      CTGAN_not_better_results = [0, 0]
-      CTGAN_better_results = [0, 0]
+      if imputation_method == "GAIN v1" or imputation_method == "GAIN v2":
+        CTGAN_not_better_results = [0, 0, 0, 0]
+        CTGAN_better_results = [0, 0, 0, 0]
+      else: 
+        CTGAN_not_better_results = [0, 0]
+        CTGAN_better_results = [0, 0]
 
       for dataset in all_datasets:
         for miss_rate in all_miss_rates:
-          values = [float(x) for x in get_filtered_values(df, dataset=dataset, miss_rate=miss_rate, evaluation=evaluation, imputation_method=imputation_method).values.ravel()]
-          if any(math.isnan(x) or x == 0 for x in values):
+          values = [float(x) for x in get_filtered_values_df(df, dataset=dataset, miss_rate=miss_rate, evaluation=evaluation, imputation_method=imputation_method).values.ravel()]
+          if values[1] == 0: # data set was not added additional data
              continue
           else:
              no_datasets +=1
 
-          best_indices = [find_best_value(values[0], values[i], evaluation) for i in [1,2]]
-
+          if values[4] == 0: 
+            best_indices = [find_best_value(values[0], values[i], evaluation) for i in [1,2]]
+          else: # 200% and 500% also is part
+            best_indices = [find_best_value(values[0], values[i], evaluation) for i in [1,2,3,4]]
+          
           for i, best_index in enumerate(best_indices):
-            if best_index == 3: # It is a tie
-                CTGAN_not_better_results[i] += 1
-                CTGAN_better_results[i] += 1
-            elif best_index == 2: #CTGAN is better
-                CTGAN_better_results[i] += 1
-            else:
-                CTGAN_not_better_results[i] += 1
+            if best_index == 2: # CTGAN is better
+              CTGAN_better_results[i] += 1
+            elif best_index == 1: # CTGAN is not better
+              CTGAN_not_better_results[i] += 1
 
       all_results.append(CTGAN_not_better_results)
       all_results.append(CTGAN_better_results)
@@ -132,16 +136,20 @@ def plotCTGANImpactNoBestResult(args, df):
       xtick_pos = x_ticks + bar_width/2
       bars = []
       ax = axes[i]
-      label_alternatives = ["Not improved", "Improved"]
+      label_alternatives = ["Not improved compared to no additional data", "Improved compared to no additional data"]
 
       for j, label_alternative in enumerate(label_alternatives):
           dataset_values[j] = [float(x) for x in dataset_values[j]]
           bar = ax.bar(x_ticks+j*bar_width, dataset_values[j], width=bar_width, label=label_alternative, color=colors[j+3])
           bars.append(bar)
-
-      ax.set_xticks(xtick_pos)
-      ax.set_xticklabels(["CTGAN 50%","CTGAN 100%"], rotation=15, ha='center', fontsize=8)
+      
       ax.set_title(imputation_method)
+      ax.set_xticks(xtick_pos)
+      if len(dataset_values[0]) == 2:
+        ax.set_xticklabels(["CTGAN 50%","CTGAN 100%"], rotation=35, ha='right', fontsize=8)
+      else:
+        ax.set_xticklabels(["CTGAN 50%","CTGAN 100%", "CTGAN 200%", "CTGAN 500%"], rotation=35, ha='right', fontsize=8)
+      
 
       if evaluation == 'Execution time (seconds)':
         ax.set_yscale('log')
@@ -157,7 +165,7 @@ def plotCTGANImpactNoBestResult(args, df):
   
     # Set titles
     fig.suptitle('CTGAN Impact', y=0.98, fontsize=12)
-    fig.text(0.5, 0.90, "Total number of datasets in comparison: " + str(no_datasets), fontsize=8, ha='center', va='bottom')
+    #fig.text(0.5, 0.90, "Total number of datasets in comparison: " + str(no_datasets), fontsize=8, ha='center', va='bottom')
     fig.text(0.03, 0.5, '# of best perfomer in terms of ' + evaluation, va='center', rotation='vertical', fontsize=10) 
     fig.legend(handles_list[0], labels_list[0], loc='upper center', ncol=len(label_alternatives), bbox_to_anchor=(0.5, 0.15))
 
