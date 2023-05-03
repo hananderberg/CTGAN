@@ -13,10 +13,14 @@ def calcCI(mean, st_dev, samplesize, z):
     CI_upper = mean + (z * st_dev/np.sqrt(samplesize))
     return CI_lower, CI_upper
 
-def computeCI(imputation_method, imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, samplesize, z):
-    all_dfs = imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, prediction_df, prediction_df_ctgan50, prediction_df_ctgan100
-    list = ["imputation", "imputation50CTGAN", "imputation100CTGAN", "prediction", "prediction50CTGAN", "prediction100CTGAN"]
-
+def computeCI(imputation_method, imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, imputation_df_ctgan200, imputation_df_ctgan500, prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, prediction_df_ctgan200, prediction_df_ctgan500, samplesize, z):
+    if imputation_method == "MissForest":
+      all_dfs = imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, prediction_df, prediction_df_ctgan50, prediction_df_ctgan100
+      list = ["imputation", "imputation50CTGAN", "imputation100CTGAN", "prediction", "prediction50CTGAN", "prediction100CTGAN"]
+    else:
+      all_dfs = imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, imputation_df_ctgan200, imputation_df_ctgan500, prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, prediction_df_ctgan200, prediction_df_ctgan500
+      list = ["imputation", "imputation50CTGAN", "imputation100CTGAN", "imputation200CTGAN", "imputation500CTGAN", "prediction", "prediction50CTGAN", "prediction100CTGAN", "prediction200CTGAN", "prediction500CTGAN"]
+    
     for k, df in enumerate(all_dfs):
         df_values = get_filtered_values(df, dataset=None, miss_rate=None, imputation_method=imputation_method)
         str_st_dev = "Standard Deviation " + imputation_method
@@ -33,7 +37,9 @@ def computeCI(imputation_method, imputation_df, imputation_df_ctgan50, imputatio
                 
                 # Perform some operation on the values
                 CI_lower, CI_upper = calcCI(mean, st_dev, samplesize, z)
-                result = f'({CI_lower}, {CI_upper})'
+                CI_lower = round(CI_lower, 4)
+                CI_upper= round(CI_upper, 4)
+                result = f'[{CI_lower}; {CI_upper}]'
                 
                 # Save the result to the new dataframe
                 result_df.iloc[i, j] = result
@@ -49,8 +55,8 @@ def main(args):
     #confidence_interval = 0.95
     #alpha = (1 - confidence_interval) / 2
 
-    imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, prediction_df, prediction_df_ctgan50, prediction_df_ctgan100 = readDataSeparateCsvBothImputationAndPrediction()
-    computeCI(args.imputation_method, imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, args.sample_size, args.z)
+    imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, imputation_df_ctgan200, imputation_df_ctgan500, prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, prediction_df_ctgan200, prediction_df_ctgan500 = readDataSeparateCsvBothImputationAndPrediction()
+    computeCI(args.imputation_method, imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, imputation_df_ctgan200, imputation_df_ctgan500, prediction_df, prediction_df_ctgan50, prediction_df_ctgan100, prediction_df_ctgan200, prediction_df_ctgan500, args.sample_size, args.z)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

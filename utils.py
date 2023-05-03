@@ -1,6 +1,23 @@
 import pandas as pd
 
-    
+def find_smallest_value_matrix(all_values):
+    str = ""
+
+def readDataConfidenceInterval(args):
+    filename = 'results/Results - '+ args.imputation_method + ' Confidence Interval.csv'
+    df = pd.read_csv(filename, header=None, thousands=',').drop(0)
+    df = df.replace(',', '', regex=True)
+    df.iloc[0] = df.iloc[0].ffill()
+    df.iloc[1] = df.iloc[1].ffill()
+    df.iloc[:,0] = df.iloc[:,0].ffill()
+    df.iloc[0,0] = "Dataset"
+    df.iloc[1,0] = "Dataset"
+    df.iloc[0,1] = "Missing %"
+    df.iloc[1,1] = "Missing %"
+    df = df.replace('-', 0)
+    df.columns = pd.MultiIndex.from_arrays(df[:3].values)
+    df = df[3:]
+    return df
 
 def readDataSeparateCsvBothImputationAndPrediction():
     filenames = ["results/Results - Imputation without CTGAN.csv", "results/Results - Imputation with CTGAN.csv"]
@@ -166,6 +183,18 @@ def find_no_training_samples(ctgan_option, dataset):
         else:
             return no_training 
         
+def get_filtered_values_df_confidence_interval(df, dataset=None, miss_rate=None, evaluation=None, ctgan_option=None):
+    if dataset:
+        df = df.loc[df.iloc[:, 0].str.lower() == dataset]
+    if miss_rate:
+        df = df.loc[df.iloc[:, 1].astype(str) == str(miss_rate)]
+    if evaluation:
+        df = df.loc[:, df.columns.get_level_values(2) == evaluation]
+    if ctgan_option:
+        df = df.loc[:, df.columns.get_level_values(1) == ctgan_option]
+        
+    return df  
+        
 def get_filtered_values_df(df, dataset=None, miss_rate=None, imputation_method=None, evaluation=None):
     if dataset:
         df = df.loc[df.iloc[:, 0].str.lower() == dataset]
@@ -183,7 +212,7 @@ def get_filtered_values(df, dataset=None, miss_rate=None, extra_amount=None, imp
         df = df.loc[df.iloc[:, 0].str.lower() == dataset]
     if miss_rate:
         df = df.loc[df.iloc[:, 1].astype(str) == str(miss_rate)]
-    if extra_amount==50 or extra_amount==100 or extra_amount==0:
+    if extra_amount or extra_amount==0:
         df = df.loc[df.iloc[:, 2].astype(str) == str(extra_amount)]
     if imputation_method:
         df = df.loc[:, df.columns.get_level_values(0) == imputation_method]

@@ -5,40 +5,96 @@ import pandas as pd
 import numpy as np
 import math
 
-from utils import find_miss_rates, collect_handles_and_labels, \
+from utils import find_miss_rates, collect_handles_and_labels, find_smallest_value_matrix, \
   is_vector_all_zeros, get_filtered_values, find_no_training_samples, get_filtered_values_separateCsv, \
   is_matrix_all_zeros, find_evaluation_type, find_best_value, get_filtered_values_df
 
-def plotCTGANImpact(args, all_df_imputation, all_df_prediction):
+def plotTablePerDataset(args, df_summary):
     evaluation = find_evaluation_type(args.evaluation_type, args.imputation_evaluation, args.prediction_evaluation)
-    if args.evaluation_type == "Prediction":
-       all_df = all_df_prediction
+    data_set, all_miss_rates = args.data_set, args.all_miss_rates
+    x_ticks = np.arange(len(all_miss_rates))
+
+    if args.evaluation_type == "Imputation":
+       
+       all_imputation_methods = ['Mean/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2']
+       bar_width = 0.15
+       xtick_pos = x_ticks + 2.5*bar_width 
     else:
-       all_df = all_df_imputation
+       all_imputation_methods = args.all_imputation_methods
+       bar_width = 0.13
+       xtick_pos = x_ticks + 3*bar_width 
     
+    colors = brewer2mpl.get_map('Set1', 'qualitative', 8).mpl_colors
+    handles_list = []
+    labels_list = []
+    all_values = []
+
+    for imputation_method in all_imputation_methods:
+        values = get_filtered_values(df_summary, dataset=data_set, miss_rate=None, extra_amount=0, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
+        values = values.astype(float)
+        all_values.append(values)
+
+    # Create figure and set titles
+    fig, ax = plt.subplots(figsize=(8,4))
+    bars = []
+
+    for j, imputation_method in enumerate(all_imputation_methods):
+        bar = ax.bar(x_ticks+j*bar_width, all_values[j], width=bar_width, label=imputation_method, color=colors[j])
+        bars.append(bar)
+
+    miss_rates = all_miss_rates
+    miss_rates_with_percent = [str(value) + '%' for value in miss_rates]
+
+    ax.set_xticks(xtick_pos)
+    ax.set_xticklabels(miss_rates_with_percent)
+    ax.set_title(data_set)
+    y_min = find_smallest_value_matrix(all_values)
+    y_max = np.nanmax(all_values) 
+    y_range = y_max - y_min
+    ax.set_ylim(y_min - 0.05 * y_range, y_max + 0.05 * y_range)  # Add 5% margins on both sides
+
+    if evaluation == 'Execution time (seconds)':
+      ax.set_yscale('log')
+
+    # Collect handles and labels for this subplot
+    handles, labels = collect_handles_and_labels(bars, all_imputation_methods)
+    handles_list.append(handles)
+    labels_list.append(labels)
+    
+    # Set titles
+    fig.suptitle(evaluation + ' for the ' + data_set + ' dataset for all imputation methods', y=0.98, fontsize=12)
+    fig.text(0.02, 0.5, evaluation, va='center', rotation='vertical', fontsize=10) 
+    fig.legend(handles_list[0], labels_list[0], loc='upper center', ncol=len(all_imputation_methods), bbox_to_anchor=(0.5, 0.15))
+
+    # Show the plot
+    fig.subplots_adjust(hspace=0.6, wspace=0.4, left=0.1, right=0.9, top=0.8, bottom=0.3)
+    plt.show()
+
+def plotCTGANImpact(args, df):
+    evaluation = find_evaluation_type(args.evaluation_type, args.imputation_evaluation, args.prediction_evaluation)
     all_datasets, imputation_method, ctgan_options = args.all_datasets, args.imputation_method, args.all_ctgan_options
+    if imputation_method != "GAIN v1" or imputation_method != "GAIN v2":
+      ctgan_options = ctgan_options[0:3]
     values_list = []
     current_datasets = []
     handles_list = []
     labels_list = []
-    bar_width = 0.18
     colors = brewer2mpl.get_map('Set1', 'qualitative', 8).mpl_colors
 
     for dataset in all_datasets:
-      values_ctgan50 = get_filtered_values_df(all_df[1], dataset=dataset, miss_rate=None, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
+      values_ctgan50 = get_filtered_values(df, dataset=dataset, miss_rate=None, extra_amount=50, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
       values_ctgan50 = values_ctgan50[values_ctgan50 != 0]
       if not is_vector_all_zeros(values_ctgan50):
           current_datasets.append(dataset)
-          values_ctgan100 = get_filtered_values_df(all_df[2], dataset=dataset, miss_rate=None, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
-          values = get_filtered_values_df(all_df[0], dataset=dataset, miss_rate=None, imputation_method=imputation_method, evaluation=evaluation).values.ravel()[:len(values_ctgan50)]
-          
+          values_ctgan100 = get_filtered_values(df, dataset=dataset, miss_rate=None, extra_amount=100, imputation_method=imputation_method, evaluation=evaluation).values.ravel()[:len(values_ctgan50)]
+          values = get_filtered_values(df, dataset=dataset, miss_rate=None, extra_amount=0, imputation_method=imputation_method, evaluation=evaluation).values.ravel()[:len(values_ctgan50)]
           values_list.extend([values, values_ctgan50, values_ctgan100])
-          values_ctgan200 = get_filtered_values_df(all_df[3], dataset=dataset, miss_rate=None, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
-          values_ctgan500 = get_filtered_values_df(all_df[4], dataset=dataset, miss_rate=None, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
+          
+          # 200 and 500%
+          values_ctgan200 = get_filtered_values(df, dataset=dataset, miss_rate=None, extra_amount=200, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
+          values_ctgan500 = get_filtered_values(df, dataset=dataset, miss_rate=None, extra_amount=500, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
           if not is_vector_all_zeros(values_ctgan200):
             values_list.extend([values_ctgan200, values_ctgan500])
-          else:
-            ctgan_options = ctgan_options[0:3]
 
     ## Create a figure with  subplots
     fig, axes = plt.subplots(nrows=1, ncols=len(current_datasets), figsize=(11, 3.5), sharex='col') 
@@ -46,8 +102,13 @@ def plotCTGANImpact(args, all_df_imputation, all_df_prediction):
     for i, dataset in enumerate(current_datasets):
       dataset_values = values_list[i*len(ctgan_options):(i+1)*len(ctgan_options)]
       x_ticks = np.arange(len(dataset_values[0]))
-      xtick_pos = x_ticks + 2*bar_width
       bars = []
+      if len(ctgan_options) == 3:
+        bar_width = 0.28
+        xtick_pos = x_ticks + 1*bar_width
+      else:
+        bar_width = 0.18
+        xtick_pos = x_ticks + 2*bar_width
      
       if len(current_datasets)>1:
         ax = axes[i]
@@ -191,16 +252,19 @@ def plotBarChartNoBestResultBaselineMethods(args,  df):
       for dataset in all_datasets:
         for miss_rate in all_miss_rates:
           values = get_filtered_values(df, dataset=dataset, miss_rate=miss_rate, extra_amount=0, evaluation=evaluation_type).values.ravel()
-          
+          values = values.astype(float)
+
           if is_vector_all_zeros(values):
             continue
           else:
             nr_datasets_in_evaluation[j] += 1
 
           if args.evaluation_type == "Prediction" and dataset != "news": # Max is considered the best
-            idx = np.where(values == np.max(values))[0]
+            max = np.nanmax(values)
+            idx = np.where(values == max)[0]
           elif args.evaluation_type == "Imputation" or (dataset == "news" and args.evaluation_type == "Prediction"): # Min is considered the best
-            idx = np.where(values == np.min(values))[0]
+            min = np.nanmin(values)
+            idx = np.where(values == min)[0]
           
           if len(idx) > 1:
              nr_shared_best_perfomer_in_evaluation[j] += 1
@@ -240,7 +304,6 @@ def plotBarChartNoBestResultBaselineMethods(args,  df):
     fig.subplots_adjust(hspace=0.6, wspace=0.4, left=0.1, right=0.9, top=0.8, bottom=0.3)
     plt.show()
     
-
 def plotBarChartNoBestResultAllMethods(args, df):
     evaluation = find_evaluation_type(args.evaluation_type, args.imputation_evaluation, args.prediction_evaluation)
     all_datasets, all_imputation_methods, all_miss_rates = args.all_datasets, args.all_imputation_methods, args.all_miss_rates
@@ -421,7 +484,7 @@ def plotBarChartAllDatasetsAllMissingness(args, df, extra_amount):
       y_min = np.min(dataset_values)
       y_max = np.max(dataset_values) 
       y_range = y_max - y_min
-      ax.set_ylim(y_min - 0.05 * y_range, y_max + 0.05 * y_range)  # Add 5% margins on both sides
+      #ax.set_ylim(y_min - 0.05 * y_range, y_max + 0.05 * y_range)  # Add 5% margins on both sides
 
       for j, imputation_method in enumerate(imputation_methods):
           bar = ax.bar(x_ticks+j*bar_width, dataset_values[j], width=bar_width, label=imputation_method, color=colors[j])
@@ -451,133 +514,3 @@ def plotBarChartAllDatasetsAllMissingness(args, df, extra_amount):
     fig.subplots_adjust(hspace=0.6, wspace=0.4, left=0.1, right=0.9, top=0.8, bottom=0.25)
     plt.show()
   
-'''def plotBarChartAllDatasetsOneMissingness(args, df, extra_amount):
-    evaluation = find_evaluation_type(args.evaluation_type, args.imputation_evaluation, args.prediction_evaluation)
-
-    all_datasets, miss_rate, imputation_methods = args.all_datasets, args.miss_rate, args.all_imputation_methods
-    values_list = []
-    current_datasets = []
-    colors = brewer2mpl.get_map('Set1', 'qualitative', 8).mpl_colors
-
-    for dataset in all_datasets:
-        dataset_values = get_filtered_values_separateCsv(df, dataset=dataset, miss_rate=None, imputation_method=None, evaluation=evaluation)
-        if is_vector_all_zeros(dataset_values) == False:
-            if dataset not in current_datasets:
-                current_datasets.append(dataset)
-            values_list.append(dataset_values)
-
-    ## Create a figure with subplots
-    fig, axes = plt.subplots(nrows=1, ncols=len(current_datasets), figsize=(11, 3.5), sharex='col')
-    fig.text(0.005, 0.5, evaluation, va='center', rotation='vertical', fontsize=10)  
-
-    # Plot bar charts for each dataset
-    handles_list = []
-    labels_list = []
-
-    for i, data in enumerate(current_datasets):
-        ax = axes[i]
-        bars = ax.bar(imputation_methods, values_list[i], color=colors)
-
-        if evaluation == 'Execution time (seconds)':
-          ax.set_yscale('log')
-
-        ax.set_title(current_datasets[i])
-        ax.xaxis.set_tick_params(which='both', length=0)
-        ax.set_xticklabels([])
-
-        # Collect handles and labels for this subplot
-        handles, labels = collect_handles_and_labels(bars, imputation_methods)
-        handles_list.append(handles)
-        labels_list.append(labels)
-
-    # Set title for the whole figure
-    label = "no additional CTGAN data"
-    if extra_amount == 50:
-     label = "50% additional CTGAN data"
-    elif extra_amount == 100:
-      label = "100% additional CTGAN data"
-    fig.suptitle(str(evaluation) +' with '+str(miss_rate)+ '% missingness and '+ label)
-
-    # Add some margin to the top of the subplots and move the legend there
-    fig.subplots_adjust(top=0.2)
-    fig.legend(handles, labels, loc='upper center', ncol=len(imputation_methods), bbox_to_anchor=(0.5, 0.9))
-
-    # Show the plot
-    plt.subplots_adjust(hspace=0.1, wspace=0.1, bottom=0.2, left=0.1, top=0.5)
-    fig.tight_layout(pad=2)
-    plt.show()'''
-
-'''
-def plotNoTrainingSamplesImpact(args, df, df_ctgan50, df_ctgan100):
-  all_miss_rates, all_datasets, all_imputation_methods, all_ctgan_options = args.all_miss_rates, args.all_datasets, args.all_imputation_methods, args.ctgan_options
-  if args.evaluation_type == "Prediction":
-    evaluation = args.prediction_evaluation
-  elif args.evaluation_type == "Imputation":
-    evaluation = args.imputation_evaluation
-
-  all_x = []
-  all_y = []
-
-  for miss_rate in all_miss_rates:
-      for imputation_method in all_imputation_methods:
-        y_values = []
-        x_values = []
-        for dataset in all_datasets:
-          for ctgan_option in all_ctgan_options:
-            if ctgan_option == "No CTGAN":
-              y_value = get_filtered_values(df, dataset=dataset, imputation_method=imputation_method, evaluation=evaluation, miss_rate=miss_rate)
-            elif ctgan_option == "CTGAN 50%": 
-              y_value = get_filtered_values(df_ctgan50, dataset=dataset, imputation_method=imputation_method, evaluation=evaluation, miss_rate=miss_rate)
-            elif ctgan_option == "CTGAN 100%":
-              y_value = get_filtered_values(df_ctgan100, dataset=dataset, imputation_method=imputation_method, evaluation=evaluation, miss_rate=miss_rate)
-            
-            if y_value:
-              x_value = find_no_training_samples(ctgan_option, dataset)
-              y_values.append(y_value[0])
-              x_values.append(x_value)
-
-        all_y.append(y_values)
-        all_x.append(x_values)
-   
-  ## Create a figure with subplots
-  fig, axes = plt.subplots(nrows=1, ncols=len(all_miss_rates), figsize=(11, 3.5), sharex='col')
-  fig.text(0.005, 0.5, evaluation, va='center', rotation='vertical', fontsize=10)  
-
-  # Plot bar charts for each dataset
-  handles_list = []
-  labels_list = []
-
-  for i, miss_rate in enumerate(all_miss_rates):
-    ax = axes[i]
-
-    start_index = i * 5
-    end_index = start_index + 5
-    subvector_x = all_x[start_index:end_index]
-    subvector_y = all_y[start_index:end_index]
-
-    for j, imputation_method in enumerate(all_imputation_methods):
-      subvector_x[j], subvector_y[j] = zip(*sorted(zip(subvector_x[j], subvector_y[j])))
-      ax.plot(subvector_x[j], subvector_y[j], label=imputation_method)
-
-    if evaluation == 'Execution time (seconds)':
-      ax.set_yscale('log')
-
-    ax.set_title(all_miss_rates[i])
-    ax.xaxis.set_tick_params(which='both', length=0)
-    ax.set_xticklabels([])
-
-    # Collect handles and labels for this subplot
-    #handles, labels = collect_handles_and_labels(bars, imputation_methods)
-    #handles_list.append(handles)
-    #labels_list.append(labels)
-
-    fig.suptitle(str(evaluation) +' with '+str(miss_rate)+ '% missingness and ')
-
-    # Add some margin to the top of the subplots and move the legend there
-    fig.subplots_adjust(top=0.2)
-    #fig.legend(handles, labels, loc='upper center', ncol=len(all_miss_rates), bbox_to_anchor=(0.5, 0.9))
-
-    # Show the plot
-    plt.subplots_adjust(hspace=0.1, wspace=0.1, bottom=0.2, left=0.1, top=0.5)
-    fig.tight_layout(pad=2)
-    plt.show()'''
