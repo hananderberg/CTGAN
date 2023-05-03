@@ -6,8 +6,7 @@ import argparse
 
 def main(args):
     ## Load data different ways
-    df_confidence_interval = readDataConfidenceInterval(args)
-    df_filt = get_filtered_values_df_confidence_interval(df_confidence_interval, dataset="mushroom", miss_rate=10, evaluation="mRMSE", ctgan_option="0 % CTGAN")
+    #df_confidence_interval = readDataConfidenceInterval("MissForest")
     df, df_ctgan50, df_ctgan100 = readDataSeparateCsv(args)
     df_summary = readDataSummary(args)
     imputation_df, imputation_df_ctgan50, imputation_df_ctgan100, imputation_df_ctgan200, imputation_df_ctgan500, \
@@ -19,7 +18,7 @@ def main(args):
     #plotBarChartNoBestResultAllMethods(args, df_summary)
     #plotBarChartNoBestResultBaselineMethods(args, df_summary)
 
-    #plotTablePerDataset(args, df_summary) #FIX THIS Y AXIS FOR PREDICTION
+    plotTablePerDataset(args, df_summary) 
 
     #plotCTGANImpact_OLD(args, df_summary)
 

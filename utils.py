@@ -1,10 +1,19 @@
 import pandas as pd
+import numpy as np
 
-def find_smallest_value_matrix(all_values):
-    str = ""
+def find_smallest_value_matrix(arr_list):
+    min_val = float("inf")
 
-def readDataConfidenceInterval(args):
-    filename = 'results/Results - '+ args.imputation_method + ' Confidence Interval.csv'
+    # Loop through each array in the list
+    for arr in arr_list:
+        # Loop through each element in the array and update the minimum non-zero value if necessary
+        for val in arr:
+            if val != 0 and val < min_val:
+                min_val = val
+    return min_val
+
+def readDataConfidenceInterval(imputation_method):
+    filename = 'results/Results - '+ imputation_method + ' Confidence Interval.csv'
     df = pd.read_csv(filename, header=None, thousands=',').drop(0)
     df = df.replace(',', '', regex=True)
     df.iloc[0] = df.iloc[0].ffill()
@@ -192,7 +201,7 @@ def get_filtered_values_df_confidence_interval(df, dataset=None, miss_rate=None,
         df = df.loc[:, df.columns.get_level_values(2) == evaluation]
     if ctgan_option:
         df = df.loc[:, df.columns.get_level_values(1) == ctgan_option]
-        
+
     return df  
         
 def get_filtered_values_df(df, dataset=None, miss_rate=None, imputation_method=None, evaluation=None):

@@ -64,7 +64,7 @@ def plotTablePerDataset(args, df_summary):
     # Set titles
     fig.suptitle(evaluation + ' for the ' + data_set + ' dataset for all imputation methods', y=0.98, fontsize=12)
     fig.text(0.02, 0.5, evaluation, va='center', rotation='vertical', fontsize=10) 
-    fig.legend(handles_list[0], labels_list[0], loc='upper center', ncol=len(all_imputation_methods), bbox_to_anchor=(0.5, 0.15))
+    fig.legend(handles_list[0], labels_list[0], loc='upper center', ncol=len(all_imputation_methods), bbox_to_anchor=(0.5, 0.15), fontsize=8)
 
     # Show the plot
     fig.subplots_adjust(hspace=0.6, wspace=0.4, left=0.1, right=0.9, top=0.8, bottom=0.3)
