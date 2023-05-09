@@ -15,8 +15,7 @@ def plotTablePerDataset(args, df_summary):
     x_ticks = np.arange(len(all_miss_rates))
 
     if args.evaluation_type == "Imputation":
-       
-       all_imputation_methods = ['Mean/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2']
+       all_imputation_methods = ['Median/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2']
        bar_width = 0.15
        xtick_pos = x_ticks + 2.5*bar_width 
     else:
@@ -35,7 +34,7 @@ def plotTablePerDataset(args, df_summary):
         all_values.append(values)
 
     # Create figure and set titles
-    fig, ax = plt.subplots(figsize=(8,4))
+    fig, ax = plt.subplots(figsize=(6,4))
     bars = []
 
     for j, imputation_method in enumerate(all_imputation_methods):
@@ -62,18 +61,18 @@ def plotTablePerDataset(args, df_summary):
     labels_list.append(labels)
     
     # Set titles
-    fig.suptitle(evaluation + ' for the ' + data_set + ' dataset for all imputation methods', y=0.98, fontsize=12)
+    #fig.suptitle(evaluation + ' for the ' + data_set + ' dataset for all imputation methods', y=0.98, fontsize=12)
     fig.text(0.02, 0.5, evaluation, va='center', rotation='vertical', fontsize=10) 
-    fig.legend(handles_list[0], labels_list[0], loc='upper center', ncol=len(all_imputation_methods), bbox_to_anchor=(0.5, 0.15), fontsize=8)
+    fig.legend(handles_list[0], labels_list[0], loc='upper center', ncol=len(all_imputation_methods), bbox_to_anchor=(0.5, 0.15), fontsize=6)
 
     # Show the plot
-    fig.subplots_adjust(hspace=0.6, wspace=0.4, left=0.1, right=0.9, top=0.8, bottom=0.3)
+    fig.subplots_adjust(hspace=0.6, wspace=0.4, left=0.15, right=0.9, top=0.8, bottom=0.3)
     plt.show()
 
 def plotCTGANImpact(args, df):
     evaluation = find_evaluation_type(args.evaluation_type, args.imputation_evaluation, args.prediction_evaluation)
     all_datasets, imputation_method, ctgan_options = args.all_datasets, args.imputation_method, args.all_ctgan_options
-    if imputation_method != "GAIN v1" or imputation_method != "GAIN v2":
+    if imputation_method != "GAIN v1" and imputation_method != "GAIN v2":
       ctgan_options = ctgan_options[0:3]
     values_list = []
     current_datasets = []
@@ -94,6 +93,8 @@ def plotCTGANImpact(args, df):
           values_ctgan200 = get_filtered_values(df, dataset=dataset, miss_rate=None, extra_amount=200, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
           values_ctgan500 = get_filtered_values(df, dataset=dataset, miss_rate=None, extra_amount=500, imputation_method=imputation_method, evaluation=evaluation).values.ravel()
           if not is_vector_all_zeros(values_ctgan200):
+            values_ctgan200 = values_ctgan200[values_ctgan200 != 0]
+            values_ctgan500 = values_ctgan500[values_ctgan500 != 0]
             values_list.extend([values_ctgan200, values_ctgan500])
 
     ## Create a figure with  subplots
@@ -140,8 +141,8 @@ def plotCTGANImpact(args, df):
       labels_list.append(labels)
 
     # Set titles
-    fig.suptitle(str(imputation_method) + ' for all datasets with different additional CTGAN data', y=0.98, fontsize=12)
-    fig.text(0.03, 0.5, evaluation, va='center', rotation='vertical', fontsize=10) 
+    #fig.suptitle(str(imputation_method) + ' for all datasets with different additional CTGAN data', y=0.98, fontsize=12)
+    fig.text(0.02, 0.5, evaluation, va='center', rotation='vertical', fontsize=10) 
     fig.legend(handles_list[0], labels_list[0], loc='upper center', ncol=len(ctgan_options), bbox_to_anchor=(0.5, 0.15))
 
     # Show the plot
@@ -150,7 +151,8 @@ def plotCTGANImpact(args, df):
 
 def plotCTGANImpactNoBestResult(args, df):
     evaluation = find_evaluation_type(args.evaluation_type, args.imputation_evaluation, args.prediction_evaluation)
-    all_datasets, all_imputation_methods, all_miss_rates = args.all_datasets, args.all_imputation_methods, args.all_miss_rates
+    all_imputation_methods = ['Median/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2']
+    all_datasets, all_miss_rates = args.all_datasets, args.all_miss_rates
     colors = brewer2mpl.get_map('Set1', 'qualitative', 8).mpl_colors
     bar_width = 0.4
     handles_list = []
@@ -197,11 +199,11 @@ def plotCTGANImpactNoBestResult(args, df):
       xtick_pos = x_ticks + bar_width/2
       bars = []
       ax = axes[i]
-      label_alternatives = ["Not improved compared to no additional data", "Improved compared to no additional data"]
+      label_alternatives = [ "CTGAN worsens result", "CTGAN improves result"]
 
       for j, label_alternative in enumerate(label_alternatives):
           dataset_values[j] = [float(x) for x in dataset_values[j]]
-          bar = ax.bar(x_ticks+j*bar_width, dataset_values[j], width=bar_width, label=label_alternative, color=colors[j+3])
+          bar = ax.bar(x_ticks+j*bar_width, dataset_values[j], width=bar_width, label=label_alternative, color=colors[j])
           bars.append(bar)
       
       ax.set_title(imputation_method)
@@ -210,7 +212,6 @@ def plotCTGANImpactNoBestResult(args, df):
         ax.set_xticklabels(["CTGAN 50%","CTGAN 100%"], rotation=35, ha='right', fontsize=8)
       else:
         ax.set_xticklabels(["CTGAN 50%","CTGAN 100%", "CTGAN 200%", "CTGAN 500%"], rotation=35, ha='right', fontsize=8)
-      
 
       if evaluation == 'Execution time (seconds)':
         ax.set_yscale('log')
@@ -225,10 +226,10 @@ def plotCTGANImpactNoBestResult(args, df):
         ax.axhline(y=i, color='grey', linestyle='--', linewidth=0.2)
   
     # Set titles
-    fig.suptitle('CTGAN Impact', y=0.98, fontsize=12)
+    #fig.suptitle('CTGAN Impact', y=0.98, fontsize=12)
     #fig.text(0.5, 0.90, "Total number of datasets in comparison: " + str(no_datasets), fontsize=8, ha='center', va='bottom')
     fig.text(0.03, 0.5, '# of best perfomer in terms of ' + evaluation, va='center', rotation='vertical', fontsize=10) 
-    fig.legend(handles_list[0], labels_list[0], loc='upper center', ncol=len(label_alternatives), bbox_to_anchor=(0.5, 0.15))
+    fig.legend(handles_list[0], labels_list[0], loc='upper center', ncol=len(label_alternatives), bbox_to_anchor=(0.5, 0.11))
 
     # Show the plot
     fig.subplots_adjust(hspace=0.6, wspace=0.3, left=0.1, right=0.9, top=0.8, bottom=0.3)
@@ -237,9 +238,13 @@ def plotCTGANImpactNoBestResult(args, df):
 def plotBarChartNoBestResultBaselineMethods(args,  df):
     if args.evaluation_type == "Prediction":
        all_evaluation_types = args.all_prediction_evaluations
+       all_imputation_methods = args.all_imputation_methods
+       evaluation_labels = ['Accuracy', 'AUROC', 'MSE']
     else:
        all_evaluation_types = args.all_imputation_evaluations
-    all_datasets, all_imputation_methods, all_miss_rates = args.all_datasets, args.all_imputation_methods, args.all_miss_rates
+       evaluation_labels = ['mRMSE', 'RMSE numerical', 'RMSE categorical', 'PFC', 'Execution time']
+       all_imputation_methods = ['Median/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2']
+    all_datasets, all_miss_rates = args.all_datasets, args.all_miss_rates
     colors = brewer2mpl.get_map('Set1', 'qualitative', 8).mpl_colors
     bar_width = 0.6
     all_y_values = []
@@ -263,6 +268,9 @@ def plotBarChartNoBestResultBaselineMethods(args,  df):
             max = np.nanmax(values)
             idx = np.where(values == max)[0]
           elif args.evaluation_type == "Imputation" or (dataset == "news" and args.evaluation_type == "Prediction"): # Min is considered the best
+            if 0 in values:
+              values = [math.inf if num == 0 else num for num in values]
+            
             min = np.nanmin(values)
             idx = np.where(values == min)[0]
           
@@ -276,7 +284,8 @@ def plotBarChartNoBestResultBaselineMethods(args,  df):
 
     ## Create a figure with  subplots
     fig, axes = plt.subplots(nrows=1, ncols=len(all_evaluation_types), figsize=(11, 3.5), sharex='col') 
-
+    
+   
     for i, evaluation_type in enumerate(all_evaluation_types):
       x_ticks = np.arange(len(all_imputation_methods))
       xtick_pos = x_ticks + bar_width
@@ -286,9 +295,9 @@ def plotBarChartNoBestResultBaselineMethods(args,  df):
 
       ax.set_xticks(xtick_pos)
       ax.set_xticklabels(all_imputation_methods, rotation=45, ha='right', fontsize=8)
-      ax.set_title(evaluation_type)
-      ax.text(0.5, -0.45, "# of datasets: " + str(nr_datasets_in_evaluation[i]), fontsize=7, ha='center', transform=ax.transAxes)
-      ax.text(0.5, -0.55, "# of shared best perfomer: " + str(nr_shared_best_perfomer_in_evaluation[i]), fontsize=7, ha='center', transform=ax.transAxes)
+      ax.set_title(evaluation_labels[i])
+      #ax.text(0.5, -0.45, "# of datasets: " + str(nr_datasets_in_evaluation[i]), fontsize=7, ha='center', transform=ax.transAxes)
+      ax.text(0.5, -0.55, "# of datasets: " + str(nr_datasets_in_evaluation[i]) + ", # of shared best perfomer: " + str(nr_shared_best_perfomer_in_evaluation[i]), fontsize=7, ha='center', transform=ax.transAxes)
       ax.yaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
       ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
@@ -297,7 +306,7 @@ def plotBarChartNoBestResultBaselineMethods(args,  df):
         ax.axhline(y=i, color='grey', linestyle='--', linewidth=0.2)
 
     # Set titles
-    fig.suptitle('Number of best performer per evaluation metric for all baseline methods', y=0.98, fontsize=12)
+    #fig.suptitle('Number of best performer per evaluation metric for all baseline methods', y=0.98, fontsize=12)
     fig.text(0.03, 0.5, '# of best perfomer', va='center', rotation='vertical', fontsize=10) 
 
     # Show the plot

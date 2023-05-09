@@ -31,7 +31,7 @@ def computeCI(imputation_method, imputation_df, imputation_df_ctgan50, imputatio
 
         # Iterate over the values of both dataframes using a nested for loop
         for i in range(len(df_values)):
-            for j in range(len(df_values.columns)):
+            for j in range(len(df_standard_dev.columns)):
                 mean = df_values.iloc[i, j]
                 st_dev = df_standard_dev.iloc[i, j]
                 
@@ -47,6 +47,7 @@ def computeCI(imputation_method, imputation_df, imputation_df_ctgan50, imputatio
         # Save to csv
         print(result_df)
         string = list[k]
+
         filename = 'results/{}_CI_{}.csv'.format(args.imputation_method, string)
         result_df.to_csv(filename, index = False)
 
@@ -63,7 +64,7 @@ if __name__ == '__main__':
     parser.add_argument(
       '--imputation_method',
       choices = ['MissForest', 'GAIN v1', 'GAIN v2'],
-      default='MissForest',
+      default='GAIN v2',
       type=str)
     parser.add_argument(
       '--sample_size',

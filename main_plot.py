@@ -18,11 +18,11 @@ def main(args):
     #plotBarChartNoBestResultAllMethods(args, df_summary)
     #plotBarChartNoBestResultBaselineMethods(args, df_summary)
 
-    plotTablePerDataset(args, df_summary) 
+    #plotTablePerDataset(args, df_summary) 
 
     #plotCTGANImpact_OLD(args, df_summary)
 
-    #plotCTGANImpact(args, df_summary)
+    plotCTGANImpact(args, df_summary)
 
     #plotBarChartAllDatasetsAllMissingness(args, df, 0)
     #plotBarChartAllDatasetsAllMissingness(args, df_ctgan50, 50)
@@ -47,7 +47,7 @@ if __name__ == '__main__':
       type=str)
     parser.add_argument(
       '--all_imputation_methods',
-      default=['Mean/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2', 'List-wise deletion'],
+      default=['Median/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2', 'List-wise deletion'],
       type=str)
     parser.add_argument(
       '--miss_rate',
@@ -56,7 +56,7 @@ if __name__ == '__main__':
       type=str)
     parser.add_argument(
       '--imputation_method',
-      choices=['Mean/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2', 'List-wise deletion'],
+      choices=['Median/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2', 'List-wise deletion'],
       default='MissForest',
       type=str)
     parser.add_argument(
@@ -94,6 +94,6 @@ if __name__ == '__main__':
     args.imputation_evaluation = 'mRMSE'
     args.prediction_evaluation = 'AUROC'
     args.evaluation_type = 'Prediction'
-    args.imputation_method = 'MissForest'
-    args.data_set = "mushroom"
+    args.imputation_method = 'GAIN v2'
+    args.data_set = "news"
     main(args)
