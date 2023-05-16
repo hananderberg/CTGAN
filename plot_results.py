@@ -314,8 +314,9 @@ def plotBarChartNoBestResultBaselineMethods(args,  df):
     plt.show()
     
 def plotBarChartNoBestResultAllMethods(args, df):
+    all_imputation_methods = ['Median/mode', 'MICE', 'kNN', 'MissForest', 'GAIN v1', 'GAIN v2']
     evaluation = find_evaluation_type(args.evaluation_type, args.imputation_evaluation, args.prediction_evaluation)
-    all_datasets, all_imputation_methods, all_miss_rates = args.all_datasets, args.all_imputation_methods, args.all_miss_rates
+    all_datasets, all_miss_rates = args.all_datasets, args.all_miss_rates
     colors = brewer2mpl.get_map('Set1', 'qualitative', 8).mpl_colors
 
     # Create x labels
@@ -324,6 +325,9 @@ def plotBarChartNoBestResultAllMethods(args, df):
       labels.append('{}'.format(method))
       labels.append('{} CTGAN 50%'.format(method))
       labels.append('{} CTGAN 100%'.format(method))
+      if method == "GAIN v1" or method == "GAIN v2":
+        labels.append('{} CTGAN 200%'.format(method))
+        labels.append('{} CTGAN 500%'.format(method))
 
     y_values = [0] * len(labels)
     no_datasets = 0
@@ -340,10 +344,10 @@ def plotBarChartNoBestResultAllMethods(args, df):
           no_datasets += 1
 
           if args.evaluation_type == "Prediction" and dataset != "news": # Max is considered the best
-            nonzero_matrix = np.where(matrix != 0, matrix, -np.inf)  # Replace zeros with infinity
+            nonzero_matrix = np.where(matrix != 0, matrix, -np.inf)  # Replace zeros with negative infinity
             value = np.nanmax(nonzero_matrix)
           elif args.evaluation_type == "Imputation" or (dataset == "news" and args.evaluation_type == "Prediction"): # Min is considered the best
-            nonzero_matrix = np.where(matrix != 0, matrix, np.inf)  # Replace zeros with negative infinity
+            nonzero_matrix = np.where(matrix != 0, matrix, np.inf)  # Replace zeros with infinity
             value = np.nanmin(nonzero_matrix)
           
           row_indexes, col_indexes = np.where(matrix == value)
@@ -358,6 +362,10 @@ def plotBarChartNoBestResultAllMethods(args, df):
               best_extra_amount = " CTGAN 50%"
             elif row_index == 2:
               best_extra_amount = " CTGAN 100%"  
+            elif row_index == 3:
+              best_extra_amount = " CTGAN 200%"  
+            elif row_index == 4:
+              best_extra_amount = " CTGAN 500%"  
             
             best_imputation_method = df_filtered.columns.get_level_values(0)[col_indexes[i]]
             tot_best_method = '{}{}'.format(best_imputation_method, best_extra_amount)
@@ -370,7 +378,7 @@ def plotBarChartNoBestResultAllMethods(args, df):
 
     # Create figure and set titles
     fig, ax = plt.subplots(figsize=(8,4))
-    fig.suptitle('Number of best perfomer in terms of '+ evaluation + ' for all methods', y=0.98, fontsize=12)
+    #fig.suptitle('Number of best perfomer in terms of '+ evaluation + ' for all methods', y=0.98, fontsize=12)
     fig.text(0.5, 0.88, "Total number of datasets in comparison: " + str(no_datasets), fontsize=8, ha='center', va='bottom')
     fig.text(0.5, 0.85, "Total number of shared best perfomer: " + str(no_shared_first_places), fontsize=8, ha='center', va='bottom')
 

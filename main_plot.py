@@ -16,13 +16,13 @@ def main(args):
 
     ## Different plots
     #plotBarChartNoBestResultAllMethods(args, df_summary)
-    #plotBarChartNoBestResultBaselineMethods(args, df_summary)
+    plotBarChartNoBestResultBaselineMethods(args, df_summary)
 
     #plotTablePerDataset(args, df_summary) 
 
     #plotCTGANImpact_OLD(args, df_summary)
 
-    plotCTGANImpact(args, df_summary)
+    #plotCTGANImpact(args, df_summary)
 
     #plotBarChartAllDatasetsAllMissingness(args, df, 0)
     #plotBarChartAllDatasetsAllMissingness(args, df_ctgan50, 50)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     # Set parameters
     args.imputation_evaluation = 'mRMSE'
     args.prediction_evaluation = 'AUROC'
-    args.evaluation_type = 'Prediction'
+    args.evaluation_type = 'Imputation'
     args.imputation_method = 'GAIN v2'
     args.data_set = "news"
     main(args)

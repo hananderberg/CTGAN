@@ -1,5 +1,17 @@
+import re
 import pandas as pd
 import numpy as np
+
+
+
+def get_values_and_bounds(df, dataset, miss_rate, evaluation, ctgan_option):
+    values = get_filtered_values_df_confidence_interval(df, dataset=dataset, miss_rate=miss_rate, evaluation=evaluation, ctgan_option=ctgan_option).values.ravel()
+    numbers = re.findall(r'\d+\.\d+', str(values))
+    if len(numbers) == 0:
+        return None, None
+    lower = float(numbers[0])
+    upper = float(numbers[1])
+    return lower, upper
 
 def find_smallest_value_matrix(arr_list):
     min_val = float("inf")
@@ -124,6 +136,22 @@ def readDataSeparateCsv(args):
     df_ctgan100 = data_frames[1].iloc[idx+1:].reset_index(drop=True)
 
     return data_frames[0], df_ctgan50, df_ctgan100
+
+def find_best_value_stat_sign(gainv1_lower_0, gainv1_upper_0, gainv1_lower_ctgan, gainv1_upper_ctgan, evaluation):
+    if evaluation == "Accuracy" or evaluation == "AUROC": # Max value is better
+        if gainv1_upper_0 > gainv1_upper_ctgan and gainv1_lower_0 > gainv1_upper_ctgan: # 0 % is stat sign better
+            return 1
+        elif gainv1_upper_ctgan > gainv1_upper_0 and gainv1_lower_ctgan > gainv1_upper_0: # ctgan is stat sign better
+            return 2
+        else: 
+            return 3
+    else: # Min value is better
+        if gainv1_lower_0 < gainv1_lower_ctgan and gainv1_upper_0 < gainv1_lower_ctgan: # 0 % is stat sign better
+            return 1
+        elif gainv1_lower_ctgan < gainv1_lower_0 and gainv1_lower_ctgan < gainv1_upper_0: # 50 % is stat sign better
+            return 2
+        else: 
+            return 3
 
 def find_best_value(value1, value2, evaluation):
     if evaluation == "Accuracy" or evaluation == "AUROC": # Max value is better
@@ -290,3 +318,59 @@ def is_matrix_all_zeros(values):
             if float(val) != 0:
                 return False
     return True
+
+
+def get_all_upper_and_lower(df_summary, df_confidence_interval_missforest, df_confidence_interval_gainv1, df_confidence_interval_gainv2, data_set, miss_rate, evaluation):
+    mf_lower_0, mf_upper_0 = get_values_and_bounds(df_confidence_interval_missforest, data_set, miss_rate, evaluation, "0 % CTGAN")
+    
+    if mf_lower_0 == None and mf_upper_0 == None:
+        return None, None
+    
+    mf_lower_50, mf_upper_50 = get_values_and_bounds(df_confidence_interval_missforest, data_set, miss_rate, evaluation, "50 % CTGAN")
+    mf_lower_100, mf_upper_100 = get_values_and_bounds(df_confidence_interval_missforest, data_set, miss_rate, evaluation, "100 % CTGAN")
+
+    gainv1_lower_0, gainv1_upper_0 = get_values_and_bounds(df_confidence_interval_gainv1, data_set, miss_rate, evaluation, "0 % CTGAN")
+    gainv2_lower_0, gainv2_upper_0 = get_values_and_bounds(df_confidence_interval_gainv2, data_set, miss_rate, evaluation, "0 % CTGAN")
+            
+    gainv1_lower_50, gainv1_upper_50 = get_values_and_bounds(df_confidence_interval_gainv1, data_set, miss_rate, evaluation, "50 % CTGAN")
+    gainv2_lower_50, gainv2_upper_50 = get_values_and_bounds(df_confidence_interval_gainv2, data_set, miss_rate, evaluation, "50 % CTGAN")
+
+    gainv1_lower_100, gainv1_upper_100 = get_values_and_bounds(df_confidence_interval_gainv1, data_set, miss_rate, evaluation, "100 % CTGAN")
+    gainv2_lower_100, gainv2_upper_100 = get_values_and_bounds(df_confidence_interval_gainv2, data_set, miss_rate, evaluation, "100 % CTGAN")
+
+    gainv1_lower_200, gainv1_upper_200 = get_values_and_bounds(df_confidence_interval_gainv1, data_set, miss_rate, evaluation, "200 % CTGAN")
+    gainv2_lower_200, gainv2_upper_200 = get_values_and_bounds(df_confidence_interval_gainv2, data_set, miss_rate, evaluation, "200 % CTGAN")
+
+    gainv1_lower_500, gainv1_upper_500 = get_values_and_bounds(df_confidence_interval_gainv1, data_set, miss_rate, evaluation, "500 % CTGAN")
+    gainv2_lower_500, gainv2_upper_500 = get_values_and_bounds(df_confidence_interval_gainv2, data_set, miss_rate, evaluation, "500 % CTGAN")
+
+    value_medianmode_0 = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=0, imputation_method='Median/mode', evaluation=evaluation).values.ravel()[0])
+    value_MICE_0 = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=0, imputation_method='MICE', evaluation=evaluation).values.ravel()[0])
+    value_kNN_0 = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=0, imputation_method='kNN', evaluation=evaluation).values.ravel()[0])
+            
+    value_medianmode_50 = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=50, imputation_method='Median/mode', evaluation=evaluation).values.ravel()[0])
+    value_MICE_50 = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=50, imputation_method='MICE', evaluation=evaluation).values.ravel()[0])
+    value_kNN_50 = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=50, imputation_method='kNN', evaluation=evaluation).values.ravel()[0])
+            
+    value_medianmode_100 = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=100, imputation_method='Median/mode', evaluation=evaluation).values.ravel()[0])
+    value_MICE_100 = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=100, imputation_method='MICE', evaluation=evaluation).values.ravel()[0])
+    value_kNN_100 = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=100, imputation_method='kNN', evaluation=evaluation).values.ravel()[0])
+    
+    if evaluation in ['Accuracy', 'AUROC', 'MSE']: # It is prediction
+        value_listwise = float(get_filtered_values(df_summary, dataset=data_set, miss_rate=miss_rate, extra_amount=100, imputation_method='List-wise deletion', evaluation=evaluation).values.ravel()[0])
+        if value_listwise == 0:
+            if evaluation == "MSE":
+                value_listwise = np.inf
+            else:
+                value_listwise = -np.inf
+        all_lower = [value_medianmode_0, value_medianmode_50, value_medianmode_100, value_MICE_0, value_MICE_50, value_MICE_100, value_kNN_0, value_kNN_50, value_kNN_100, mf_lower_0, mf_lower_50, mf_lower_100, \
+                            gainv1_lower_0, gainv1_lower_50, gainv1_lower_100, gainv1_lower_200, gainv1_lower_500, gainv2_lower_0, gainv2_lower_50, gainv2_lower_100, gainv2_lower_200, gainv2_lower_500]
+        all_upper = [value_medianmode_0, value_medianmode_50, value_medianmode_100, value_MICE_0, value_MICE_50, value_MICE_100, value_kNN_0, value_kNN_50, value_kNN_100, mf_upper_0, mf_upper_50, mf_upper_100, \
+                         gainv1_upper_0, gainv1_upper_50, gainv1_upper_100, gainv1_upper_200, gainv1_upper_500, gainv2_upper_0, gainv2_upper_50, gainv2_upper_100, gainv2_upper_200, gainv2_upper_500]
+    else:
+        all_lower = [value_medianmode_0, value_medianmode_50, value_medianmode_100, value_MICE_0, value_MICE_50, value_MICE_100, value_kNN_0, value_kNN_50, value_kNN_100, mf_lower_0, mf_lower_50, mf_lower_100, \
+                            gainv1_lower_0, gainv1_lower_50, gainv1_lower_100, gainv1_lower_200, gainv1_lower_500, gainv2_lower_0, gainv2_lower_50, gainv2_lower_100, gainv2_lower_200, gainv2_lower_500]
+        all_upper = [value_medianmode_0, value_medianmode_50, value_medianmode_100, value_MICE_0, value_MICE_50, value_MICE_100, value_kNN_0, value_kNN_50, value_kNN_100, mf_upper_0, mf_upper_50, mf_upper_100, \
+                         gainv1_upper_0, gainv1_upper_50, gainv1_upper_100, gainv1_upper_200, gainv1_upper_500, gainv2_upper_0, gainv2_upper_50, gainv2_upper_100, gainv2_upper_200, gainv2_upper_500]
+              
+    return all_lower, all_upper
